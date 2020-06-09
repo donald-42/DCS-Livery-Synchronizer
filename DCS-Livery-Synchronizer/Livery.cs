@@ -9,7 +9,7 @@ namespace DCS_Livery_Synchronizer
     /// <summary>
     /// Represents all Information necessary about an installed or to-be installed livery
     /// </summary>
-    class Livery
+    public class Livery
     {
         //path to the directory of the livery
         public string path;

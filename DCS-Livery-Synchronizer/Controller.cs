@@ -1,4 +1,5 @@
-﻿using DCS_Livery_Synchronizer.Properties;
+﻿using DCS_Livery_Synchronizer.helper;
+using DCS_Livery_Synchronizer.Properties;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,7 +17,7 @@ namespace DCS_Livery_Synchronizer
     /// <summary>
     /// Does most of the work. Handles the programm settings, provides additional functionality to the form objects, executes the sync and downloading.
     /// </summary>
-    class Controller
+    public class Controller
     {
         private string roamingPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DCSLiveriesSynchronizer"); //Path to the programm settings file in appdata/roaming
         private string savefileName = "settings.xml"; //Name of the settings file
@@ -26,10 +27,22 @@ namespace DCS_Livery_Synchronizer
 
         private Settings settings;
 
+        public void CreateRepository(string name, List<string> liverypaths, string savepath)
+        {
+            Repository repo = new Repository(settings.version, name, this);
+            repo.createList(liverypaths);
+            repo.saveRepo(savepath);
+        }
+
         public Controller()
         {
             savefilePath = Path.Combine(roamingPath, savefileName);
             installedLiveries = new List<Livery>();
+        }
+
+        public List<Livery> GetInstalledLiveries()
+        {
+            return installedLiveries;
         }
 
         /// <summary>
@@ -104,7 +117,7 @@ namespace DCS_Livery_Synchronizer
                     string aircrafttype = Path.GetFileName(subdir);
                     foreach(String livpath in Directory.GetDirectories(subdir))
                     {
-                        System.Console.WriteLine(livpath);
+                       // System.Console.WriteLine(livpath);
                         if (File.Exists(Path.Combine(livpath, "description.lua")))
                         {
                             string descriptionpath = Path.Combine(livpath, "description.lua");
@@ -112,8 +125,9 @@ namespace DCS_Livery_Synchronizer
                             Livery livery = new Livery();
                             livery.aircraft = aircrafttype;
                             livery.path = livpath;
-                            livery.name = GetNameFromLua(descriptionpath);
-                            livery.countries = GetCountriesFromLua(descriptionpath);
+                            Description dsc = new Description(descriptionpath);
+                            livery.name = dsc.GetName();
+                            livery.countries = dsc.GetCountries();
                             if(livery.name == null)
                             {
                                 livery.name = ""; // no livery name or not readable, might set to unknown
@@ -123,93 +137,11 @@ namespace DCS_Livery_Synchronizer
                                 livery.countries = ""; // no countries set or not readable, this should stand for all countries
                             }
 
-                            Console.WriteLine(livery.ToString());
+                            //Console.WriteLine(livery.ToString());
                             installedLiveries.Add(livery);
                         }
                     }
                 }
-            }
-        }
-
-        public static string GetNameFromLua(string luaFile)
-        {
-            try
-            {
-                string[] lines = File.ReadAllLines(luaFile);
-
-                int countBraces = 0;
-                foreach (string line in lines)
-                {
-                    string linewithoutcomment = line;
-                    for(int i = 1; i<line.Length; i++)
-                    {
-                        if (line[i-1] == '-' && line[i] == '-') //comment, ignore everything after this.
-                        {
-                            linewithoutcomment = line.Substring(0, i - 1);
-                        }
-                    }
-
-                    if (countBraces == 0 && linewithoutcomment.ToLower().Contains("name") && linewithoutcomment.Contains("="))
-                    {
-                        return linewithoutcomment.Split('=')[1].Trim(); //return Liveryname from Lua
-                    }
-
-                    foreach (char c in linewithoutcomment)
-                    {
-                        if (c == '{')
-                            countBraces++;
-                        else if (c == '}')
-                            countBraces--;
-                    }
-                }
-                return null;
-
-            }
-            catch (Exception e)
-            {
-                System.Console.WriteLine(e.ToString());
-                return null;
-            }
-        }
-
-        public static string GetCountriesFromLua(string luaFile)
-        {
-            try
-            {
-                string[] lines = File.ReadAllLines(luaFile);
-
-                int countBraces = 0;
-                foreach (string line in lines)
-                {
-                    string linewithoutcomment = line;
-                    for (int i = 1; i < line.Length; i++)
-                    {
-                        if (line[i - 1] == '-' && line[i] == '-') //comment, ignore everything after this.
-                        {
-                            linewithoutcomment = line.Substring(0, i - 1);
-                        }
-                    }
-
-
-
-                    if (countBraces == 0 && linewithoutcomment.ToLower().Contains("countries") && linewithoutcomment.Contains("="))
-                    {
-                        return linewithoutcomment.Split('=')[1].Trim(); //return Countries String from lua
-                    }
-
-                    foreach (char c in linewithoutcomment)
-                    {
-                        if (c == '{')
-                            countBraces++;
-                        else if (c == '}')
-                            countBraces--;
-                    }
-                }
-                return null;
-            } catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-                return null;
             }
         }
     }
