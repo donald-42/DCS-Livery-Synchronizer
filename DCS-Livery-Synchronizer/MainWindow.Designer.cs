@@ -46,6 +46,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.pbStatusBar = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // lb_savedgamespath
@@ -99,7 +100,7 @@
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Location = new System.Drawing.Point(421, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(2, 537);
+            this.panel1.Size = new System.Drawing.Size(2, 500);
             this.panel1.TabIndex = 6;
             // 
             // tbRepositoryLink
@@ -197,11 +198,20 @@
             this.label5.TabIndex = 17;
             this.label5.Text = "*All checked liveries will be part of your repo";
             // 
+            // pbStatusBar
+            // 
+            this.pbStatusBar.ForeColor = System.Drawing.Color.Lime;
+            this.pbStatusBar.Location = new System.Drawing.Point(16, 506);
+            this.pbStatusBar.Name = "pbStatusBar";
+            this.pbStatusBar.Size = new System.Drawing.Size(822, 23);
+            this.pbStatusBar.TabIndex = 18;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(850, 539);
+            this.Controls.Add(this.pbStatusBar);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.tbRepoName);
@@ -247,6 +257,7 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private System.Windows.Forms.ProgressBar pbStatusBar;
     }
 }
 

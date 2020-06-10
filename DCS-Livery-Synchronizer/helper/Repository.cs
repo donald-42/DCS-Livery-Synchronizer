@@ -87,16 +87,28 @@ namespace DCS_Livery_Synchronizer.helper
 
             string folderpath = Path.GetDirectoryName(path);
             Console.WriteLine(folderpath);
-
+            int i = 0;
+            double percentage = 0;
+            controller.setProgressBar(1);
+            controller.FormEnabled(false);
             foreach(RepoLivery liv in liveries)
             {
+                percentage = (double)(i) /liveries.Count;
+                i++;
+                controller.setProgressBar((int) (percentage * 100));
                 Console.WriteLine("Test:" + liv.path);
                 if(!Directory.Exists(Path.Combine(folderpath, liv.aircraft)))
                 {
                     Directory.CreateDirectory(Path.Combine(folderpath, liv.aircraft));
                 }
+                if(File.Exists(Path.Combine(folderpath, liv.downloadurl)))
+                {
+                    File.Delete(Path.Combine(folderpath, liv.downloadurl));
+                }
                 ZipFile.CreateFromDirectory(Path.Combine(controller.GetSettings().dcssavedgames, "Liveries", liv.path), Path.Combine(folderpath, liv.downloadurl));
             }
+            controller.setProgressBar(100);
+            controller.FormEnabled(true);
         }
 
 

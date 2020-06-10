@@ -22,6 +22,7 @@ namespace DCS_Livery_Synchronizer
         private string roamingPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DCSLiveriesSynchronizer"); //Path to the programm settings file in appdata/roaming
         private string savefileName = "settings.xml"; //Name of the settings file
         private string savefilePath;
+        private MainWindow form;
 
         private List<Livery> installedLiveries;
 
@@ -34,10 +35,26 @@ namespace DCS_Livery_Synchronizer
             repo.saveRepo(savepath);
         }
 
-        public Controller()
+        public void LoadRepository(string path)
         {
+
+        }
+
+        public Controller(MainWindow form)
+        {
+            this.form = form;
             savefilePath = Path.Combine(roamingPath, savefileName);
             installedLiveries = new List<Livery>();
+        }
+
+        public void setProgressBar(int percentage)
+        {
+            form.setProgressBar(percentage);
+        }
+
+        public void FormEnabled(bool enabled)
+        {
+            MainWindow.ActiveForm.Enabled = enabled;
         }
 
         public List<Livery> GetInstalledLiveries()

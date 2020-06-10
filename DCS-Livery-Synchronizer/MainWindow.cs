@@ -28,7 +28,7 @@ namespace DCS_Livery_Synchronizer
 
         private void MainWindow_Shown(object sender, EventArgs e)
         {
-            controller = new Controller();
+            controller = new Controller(this);
             controller.Initialize();
             //Update Controls
             tbPathLiveries.Text = controller.GetSettings().dcssavedgames;
@@ -61,6 +61,13 @@ namespace DCS_Livery_Synchronizer
             {
                 controller.CreateRepository(tbRepoName.Text, liveryPaths, saveFileDialog1.FileName);
             }
+        }
+
+        public void setProgressBar(int percentage)
+        {
+            pbStatusBar.Value = percentage;
+            pbStatusBar.Refresh();
+            ActiveForm.Refresh();
         }
     }
 }
