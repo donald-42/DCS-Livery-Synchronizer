@@ -23,7 +23,17 @@ namespace DCS_Livery_Synchronizer
 
         private void bt_FindLiveriesPath_Click(object sender, EventArgs e)
         {
-            
+            using (var fbd = new FolderBrowserDialog())
+            {
+                DialogResult result = fbd.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    tbPathLiveries.Text = fbd.SelectedPath;
+                    controller.GetSettings().dcssavedgames = fbd.SelectedPath;
+                    controller.SaveSettings();
+                }
+            }
         }
 
         private void MainWindow_Shown(object sender, EventArgs e)
@@ -33,6 +43,7 @@ namespace DCS_Livery_Synchronizer
             //Update Controls
             tbPathLiveries.Text = controller.GetSettings().dcssavedgames;
             //controller.UpdateInstalledLiveries();
+            btScanLiveries_Click(sender, e);
         }
 
         private void btScanLiveries_Click(object sender, EventArgs e)
@@ -67,7 +78,36 @@ namespace DCS_Livery_Synchronizer
         {
             pbStatusBar.Value = percentage;
             pbStatusBar.Refresh();
-            ActiveForm.Refresh();
+           // ActiveForm.Refresh();
+        }
+
+        public void ClearOnlineRepoItems()
+        {
+            clbRepositoryLiveries.Items.Clear();
+        }
+
+        public void AddOnlineRepoItem(string item)
+        {
+            clbRepositoryLiveries.Items.Add(item);
+        }
+
+        private void btScanRepository_Click(object sender, EventArgs e)
+        {
+            clbRepositoryLiveries.Items.Clear();
+            controller.LoadRepository(tbRepositoryLink.Text);
+        }
+
+        private void btInstallLiveries_Click(object sender, EventArgs e)
+        {
+            string[] checkeditems = new string[clbRepositoryLiveries.CheckedItems.Count];
+            int i = 0;
+            foreach (string livery in clbRepositoryLiveries.CheckedItems)
+            {
+                checkeditems[i] = livery;
+                i++;
+            }
+
+            controller.installliveries(checkeditems);
         }
     }
 }

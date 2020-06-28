@@ -4,11 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -23,7 +26,8 @@ namespace DCS_Livery_Synchronizer
         private string savefileName = "settings.xml"; //Name of the settings file
         private string savefilePath;
         private MainWindow form;
-
+        private Repository dlRepo;
+        private string baseUrl; //url the xml is located at, without the filename.
         private List<Livery> installedLiveries;
 
         private Settings settings;
@@ -37,7 +41,101 @@ namespace DCS_Livery_Synchronizer
 
         public void LoadRepository(string path)
         {
+            Repository loadedRepo = null;
+            //actually, this is currently useless code but might gets helpful for testing anytime.
+            if (File.Exists(path))
+            {
+                loadedRepo = new Repository(File.ReadAllText(path));
+            }
 
+            //check if URL is valid
+            Uri uriResult;
+            bool result = Uri.TryCreate(path, UriKind.Absolute, out uriResult)
+                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+            if (result)
+            {
+                using (var wc = new System.Net.WebClient())
+                    loadedRepo = new Repository(wc.DownloadString(path));
+            }
+
+            if ((loadedRepo == null) || (loadedRepo.liveries == null))
+                return;
+
+            foreach (Repository.RepoLivery rl in loadedRepo.liveries)
+            {
+                form.AddOnlineRepoItem(rl.aircraft + "\\" + Path.GetFileName(rl.path) + ": " + rl.name);
+            }
+
+            dlRepo = loadedRepo;
+            baseUrl = path.Substring(0, path.LastIndexOf('/')+1); //cut the filename 
+        }
+        /// <summary>
+        /// Download and installs the selected liveries.
+        /// </summary>
+        /// <param name="items">Selected Items in the Checkbox</param>
+        public void installliveries(string[] items)
+        {
+            if (dlRepo == null)
+                return;
+            //find the correct liveries to the selected items.
+            List<Repository.RepoLivery> installlist = new List<Repository.RepoLivery>();
+            foreach(string item in items)
+            {
+                //first split the string in the left part
+                string label = item.Split(':')[0];
+                string itemAC = label.Split('\\')[0];
+                string itemDir = label.Split('\\')[1];
+
+                foreach(Repository.RepoLivery rl in dlRepo.liveries)
+                {
+                    if ((rl.aircraft.Equals(itemAC)) && (Path.GetFileName(rl.path).Equals(itemDir))){
+                        installlist.Add(rl);
+                    }
+                }
+
+            }
+
+            //download zip files to temporary folder
+            string tempPath = Path.Combine(Path.GetTempPath(), "DCSLiverys");
+            if (!Directory.Exists(tempPath))
+            {
+                Directory.CreateDirectory(tempPath);
+            }
+
+            foreach (var x in installlist)
+            {
+                using (var client = new WebClient())
+                { 
+                    if(!Directory.Exists(Path.Combine(tempPath, x.aircraft)))
+                    {
+                        Directory.CreateDirectory(Path.Combine(tempPath, x.aircraft));
+                    }
+
+
+                    client.DownloadFile(baseUrl + x.downloadurl, Path.Combine(Path.GetTempPath(), "DCSLiverys", x.downloadurl));
+
+                    //start with installation:
+                    string installPath = Path.Combine(settings.dcssavedgames, "Liveries", x.path);
+
+                    //if exists ask for owerwrite
+                    if (Directory.Exists(installPath))
+                    {
+                        DialogResult dialogResult = MessageBox.Show("Livery at \n" + installPath + "\nalready Exists.\nDo you want to owerwrite it?" , "Folder Already Exists", MessageBoxButtons.YesNo);
+                        if (dialogResult == DialogResult.Yes)
+                        {
+                            Directory.Delete(installPath, true);
+                        }
+                        else if (dialogResult == DialogResult.No)
+                        {
+                            continue;
+                        }
+                    }
+                    //Extract and install to the right folder:
+                    ZipFile.ExtractToDirectory(Path.Combine(Path.GetTempPath(), "DCSLiverys", x.downloadurl), installPath);
+
+                }
+            }
         }
 
         public Controller(MainWindow form)
@@ -54,7 +152,7 @@ namespace DCS_Livery_Synchronizer
 
         public void FormEnabled(bool enabled)
         {
-            MainWindow.ActiveForm.Enabled = enabled;
+            form.Enabled = enabled;
         }
 
         public List<Livery> GetInstalledLiveries()
@@ -114,6 +212,18 @@ namespace DCS_Livery_Synchronizer
 
 
         }
+        /// <summary>
+        /// saves settings into the roaming folder.
+        /// </summary>
+        public void SaveSettings()
+        {
+            var serializer = new XmlSerializer(settings.GetType());
+            using (var writer = XmlWriter.Create(savefilePath))
+            {
+                serializer.Serialize(writer, settings);
+            }
+        }
+
         public Settings GetSettings()
         {
             return settings;
