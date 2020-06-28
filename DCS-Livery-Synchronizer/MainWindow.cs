@@ -76,6 +76,10 @@ namespace DCS_Livery_Synchronizer
 
         public void setProgressBar(int percentage)
         {
+            if (percentage > 100)
+                percentage = 100;
+            else if (percentage < 0)
+                percentage = 0;
             pbStatusBar.Value = percentage;
             pbStatusBar.Refresh();
            // ActiveForm.Refresh();
@@ -99,6 +103,8 @@ namespace DCS_Livery_Synchronizer
 
         private void btInstallLiveries_Click(object sender, EventArgs e)
         {
+            this.Enabled = false;
+
             string[] checkeditems = new string[clbRepositoryLiveries.CheckedItems.Count];
             int i = 0;
             foreach (string livery in clbRepositoryLiveries.CheckedItems)

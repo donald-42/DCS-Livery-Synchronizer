@@ -2,6 +2,7 @@
 using DCS_Livery_Synchronizer.Properties;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -30,7 +31,53 @@ namespace DCS_Livery_Synchronizer
         private string baseUrl; //url the xml is located at, without the filename.
         private List<Livery> installedLiveries;
 
+        private int currentInstallItem = 0;
+        private WebClient wc = new WebClient();
+        private List<Repository.RepoLivery> installlist;
+
         private Settings settings;
+        private string tempPath; //path to the temp directory where download gets stored
+
+
+        public Controller(MainWindow form)
+        {
+            this.form = form;
+            savefilePath = Path.Combine(roamingPath, savefileName);
+            installedLiveries = new List<Livery>();
+            wc.DownloadFileCompleted += Descarcare_DownloadFileCompleted;
+            wc.DownloadProgressChanged += DownloadProgChange;
+        }
+
+        void DownloadProgChange(object sender, DownloadProgressChangedEventArgs e)
+        {
+            float divider = (float)(1) / installlist.Count;
+            float additor = (float)((float)currentInstallItem / installlist.Count) * 100;
+            Console.WriteLine(additor);
+            form.setProgressBar((int)(e.ProgressPercentage * divider) +  (int)additor);
+        }
+
+        void Descarcare_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
+        {
+            var x = installlist[currentInstallItem];
+
+            Console.WriteLine("starting installation of: " + x.name);
+            //start with installation:
+            string installPath = Path.Combine(settings.dcssavedgames, "Liveries", x.path);
+
+            //if exists ask for owerwrite
+            if (Directory.Exists(installPath))
+            {
+                DialogResult dialogResult = MessageBox.Show("Livery at \n" + installPath + "\nalready Exists.\nDo you want to owerwrite it?", "Folder Already Exists", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    Directory.Delete(installPath, true);
+                    //Extract and install to the right folder:
+                    ZipFile.ExtractToDirectory(Path.Combine(Path.GetTempPath(), "DCSLiverys", x.downloadurl), installPath);
+                }
+            }
+            currentInstallItem++;
+            DownloadNext();
+        }
 
         public void CreateRepository(string name, List<string> liverypaths, string savepath)
         {
@@ -79,73 +126,62 @@ namespace DCS_Livery_Synchronizer
             if (dlRepo == null)
                 return;
             //find the correct liveries to the selected items.
-            List<Repository.RepoLivery> installlist = new List<Repository.RepoLivery>();
-            foreach(string item in items)
+            installlist = new List<Repository.RepoLivery>();
+            form.setProgressBar(1);
+            foreach (string item in items)
             {
                 //first split the string in the left part
                 string label = item.Split(':')[0];
                 string itemAC = label.Split('\\')[0];
                 string itemDir = label.Split('\\')[1];
 
-                foreach(Repository.RepoLivery rl in dlRepo.liveries)
+                foreach (Repository.RepoLivery rl in dlRepo.liveries)
                 {
-                    if ((rl.aircraft.Equals(itemAC)) && (Path.GetFileName(rl.path).Equals(itemDir))){
+                    if ((rl.aircraft.Equals(itemAC)) && (Path.GetFileName(rl.path).Equals(itemDir))) {
                         installlist.Add(rl);
                     }
                 }
 
             }
 
+            //switching to async download to show progress of download and installation in the form.
+
             //download zip files to temporary folder
-            string tempPath = Path.Combine(Path.GetTempPath(), "DCSLiverys");
+            tempPath = Path.Combine(Path.GetTempPath(), "DCSLiverys");
             if (!Directory.Exists(tempPath))
             {
                 Directory.CreateDirectory(tempPath);
             }
 
-            foreach (var x in installlist)
+            DownloadNext();
+        }
+
+        private void DownloadNext()
+        {
+            if (currentInstallItem >= installlist.Count)
             {
-                using (var client = new WebClient())
-                { 
-                    if(!Directory.Exists(Path.Combine(tempPath, x.aircraft)))
-                    {
-                        Directory.CreateDirectory(Path.Combine(tempPath, x.aircraft));
-                    }
+                //Installation completed
+                form.Enabled = true;
+                form.setProgressBar(100);
+                MessageBox.Show("All Liveries Installed");
+                return;
+            }
 
-
-                    client.DownloadFile(baseUrl + x.downloadurl, Path.Combine(Path.GetTempPath(), "DCSLiverys", x.downloadurl));
-
-                    //start with installation:
-                    string installPath = Path.Combine(settings.dcssavedgames, "Liveries", x.path);
-
-                    //if exists ask for owerwrite
-                    if (Directory.Exists(installPath))
-                    {
-                        DialogResult dialogResult = MessageBox.Show("Livery at \n" + installPath + "\nalready Exists.\nDo you want to owerwrite it?" , "Folder Already Exists", MessageBoxButtons.YesNo);
-                        if (dialogResult == DialogResult.Yes)
-                        {
-                            Directory.Delete(installPath, true);
-                        }
-                        else if (dialogResult == DialogResult.No)
-                        {
-                            continue;
-                        }
-                    }
-                    //Extract and install to the right folder:
-                    ZipFile.ExtractToDirectory(Path.Combine(Path.GetTempPath(), "DCSLiverys", x.downloadurl), installPath);
-
+            var x = installlist[currentInstallItem];
+            {
+                
+                if (!Directory.Exists(Path.Combine(tempPath, x.aircraft)))
+                {
+                    Directory.CreateDirectory(Path.Combine(tempPath, x.aircraft));
                 }
+                wc.DownloadFileAsync(new Uri(baseUrl + x.downloadurl), Path.Combine(Path.GetTempPath(), "DCSLiverys", x.downloadurl));
+                
             }
         }
 
-        public Controller(MainWindow form)
-        {
-            this.form = form;
-            savefilePath = Path.Combine(roamingPath, savefileName);
-            installedLiveries = new List<Livery>();
-        }
 
-        public void setProgressBar(int percentage)
+
+    public void setProgressBar(int percentage)
         {
             form.setProgressBar(percentage);
         }
