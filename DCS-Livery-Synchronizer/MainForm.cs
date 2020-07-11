@@ -58,6 +58,8 @@ namespace DCS_Livery_Synchronizer
             pbInstallProgress.Value = 100;
             MessageBox.Show("Selected liverys have been installed.", "Finished!");
             this.Enabled = true;
+            btRefreshLocalRepository_Click(this, EventArgs.Empty);
+           
         }
 
         /// <summary>

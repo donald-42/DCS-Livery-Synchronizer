@@ -38,7 +38,7 @@ namespace DCS_Livery_Synchronizer
         {
             var path = Path.Combine(parent.GetModel().GetSettings().dcssavedgames, "Liveries", livery.path);
             // assuming you want to include nested folders
-            var files = Directory.GetFiles(path, "*.dds", SearchOption.TopDirectoryOnly)
+            var files = Directory.GetFiles(path, "*.*", SearchOption.TopDirectoryOnly)
                                     .OrderBy(p => p).ToList();
 
             MD5 md5 = MD5.Create();
@@ -107,7 +107,7 @@ namespace DCS_Livery_Synchronizer
                                 livery.countries = ""; // no countries set or not readable, this should stand for all countries
                             }
                             livery.checksum = CalculateChecksum(livery);
-                            livery.url = livery.aircraft + "/" + livery.name + ".zip";
+                            livery.url = livery.aircraft + "/" + Path.GetFileName(livery.path) + ".zip";
                             localRepo.AddLivery(livery);
                         }
                     }
