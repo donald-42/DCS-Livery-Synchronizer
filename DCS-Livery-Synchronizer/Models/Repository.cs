@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace DCS_Livery_Synchronizer.Models
+namespace DCS_Livery_Synchronizer
 {
     /// <summary>
     /// Data Representation of a repository. Can in theory represent both online and local livery-sets.

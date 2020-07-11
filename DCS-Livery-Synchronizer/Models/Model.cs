@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DCS_Livery_Synchronizer.Models;
 
 namespace DCS_Livery_Synchronizer
 {

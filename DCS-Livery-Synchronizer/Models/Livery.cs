@@ -26,13 +26,14 @@ namespace DCS_Livery_Synchronizer
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("path: " + path);
-            sb.AppendLine("name: " + name);
-            sb.AppendLine("aircraft: " + aircraft);
-            sb.AppendLine("countries: " + countries);
+            //StringBuilder sb = new StringBuilder();
+            //sb.AppendLine("path: " + path);
+            //sb.AppendLine("name: " + name);
+            //sb.AppendLine("aircraft: " + aircraft);
+            //sb.AppendLine("countries: " + countries);
 
-            return sb.ToString();
+            //return sb.ToString();
+            return $"path: {this.path}\nname: {this.name}\naircraft: {this.aircraft}\ncountries: {this.countries}";
         }
     }
 }
