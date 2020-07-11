@@ -11,7 +11,9 @@ namespace DCS_Livery_Synchronizer
     /// </summary>
     public class Livery
     {
-        //path to the directory of the livery
+        //path to the .zip file if online repository. Will be null or empty if local livery.
+        public string url;
+        //path to the directory of the livery -- This is a unique Identifier
         public string path;
         //Name as stated in the description.lua
         public string name;
@@ -19,8 +21,10 @@ namespace DCS_Livery_Synchronizer
         public string aircraft;
         //Countries as stated in the description.lua
         public string countries;
+        //Checksum of all files in the livery-folder. To verify this against any equal-named liverys
+        public string checksum;
 
-        public string ToString()
+        public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("path: " + path);

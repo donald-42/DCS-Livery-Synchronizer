@@ -1,5 +1,4 @@
-﻿using DCS_Livery_Synchronizer.helper;
-using DCS_Livery_Synchronizer.Properties;
+﻿using DCS_Livery_Synchronizer.Properties;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -26,20 +25,20 @@ namespace DCS_Livery_Synchronizer
         private string roamingPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DCSLiveriesSynchronizer"); //Path to the programm settings file in appdata/roaming
         private string savefileName = "settings.xml"; //Name of the settings file
         private string savefilePath;
-        private MainWindow form;
-        private Repository dlRepo;
+        private Form form;
+        private RepositoryOld dlRepo;
         private string baseUrl; //url the xml is located at, without the filename.
         private List<Livery> installedLiveries;
 
         private int currentInstallItem = 0;
         private WebClient wc = new WebClient();
-        private List<Repository.RepoLivery> installlist;
+        private List<RepositoryOld.RepoLivery> installlist;
 
         private Settings settings;
         private string tempPath; //path to the temp directory where download gets stored
 
 
-        public Controller(MainWindow form)
+        public Controller(Form form)
         {
             this.form = form;
             savefilePath = Path.Combine(roamingPath, savefileName);
@@ -53,7 +52,7 @@ namespace DCS_Livery_Synchronizer
             float divider = (float)(1) / installlist.Count;
             float additor = (float)((float)currentInstallItem / installlist.Count) * 100;
             Console.WriteLine(additor);
-            form.setProgressBar((int)(e.ProgressPercentage * divider) +  (int)additor);
+            //form.setProgressBar((int)(e.ProgressPercentage * divider) +  (int)additor);
         }
 
         void Descarcare_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
@@ -81,18 +80,19 @@ namespace DCS_Livery_Synchronizer
 
         public void CreateRepository(string name, List<string> liverypaths, string savepath)
         {
-            Repository repo = new Repository(settings.version, name, this);
+            RepositoryOld repo = new RepositoryOld(settings.version, name, this);
             repo.createList(liverypaths);
             repo.saveRepo(savepath);
         }
 
+
         public void LoadRepository(string path)
         {
-            Repository loadedRepo = null;
+            RepositoryOld loadedRepo = null;
             //actually, this is currently useless code but might gets helpful for testing anytime.
             if (File.Exists(path))
             {
-                loadedRepo = new Repository(File.ReadAllText(path));
+                loadedRepo = new RepositoryOld(File.ReadAllText(path));
             }
 
             //check if URL is valid
@@ -103,15 +103,15 @@ namespace DCS_Livery_Synchronizer
             if (result)
             {
                 using (var wc = new System.Net.WebClient())
-                    loadedRepo = new Repository(wc.DownloadString(path));
+                    loadedRepo = new RepositoryOld(wc.DownloadString(path));
             }
 
             if ((loadedRepo == null) || (loadedRepo.liveries == null))
                 return;
 
-            foreach (Repository.RepoLivery rl in loadedRepo.liveries)
+            foreach (RepositoryOld.RepoLivery rl in loadedRepo.liveries)
             {
-                form.AddOnlineRepoItem(rl.aircraft + "\\" + Path.GetFileName(rl.path) + ": " + rl.name);
+              //  form.AddOnlineRepoItem(rl.aircraft + "\\" + Path.GetFileName(rl.path) + ": " + rl.name);
             }
 
             dlRepo = loadedRepo;
@@ -126,8 +126,8 @@ namespace DCS_Livery_Synchronizer
             if (dlRepo == null)
                 return;
             //find the correct liveries to the selected items.
-            installlist = new List<Repository.RepoLivery>();
-            form.setProgressBar(1);
+            installlist = new List<RepositoryOld.RepoLivery>();
+            //form.setProgressBar(1);
             foreach (string item in items)
             {
                 //first split the string in the left part
@@ -135,7 +135,7 @@ namespace DCS_Livery_Synchronizer
                 string itemAC = label.Split('\\')[0];
                 string itemDir = label.Split('\\')[1];
 
-                foreach (Repository.RepoLivery rl in dlRepo.liveries)
+                foreach (RepositoryOld.RepoLivery rl in dlRepo.liveries)
                 {
                     if ((rl.aircraft.Equals(itemAC)) && (Path.GetFileName(rl.path).Equals(itemDir))) {
                         installlist.Add(rl);
@@ -162,7 +162,7 @@ namespace DCS_Livery_Synchronizer
             {
                 //Installation completed
                 form.Enabled = true;
-                form.setProgressBar(100);
+                //form.setProgressBar(100);
                 MessageBox.Show("All Liveries Installed");
                 return;
             }
@@ -183,7 +183,7 @@ namespace DCS_Livery_Synchronizer
 
     public void setProgressBar(int percentage)
         {
-            form.setProgressBar(percentage);
+            //form.setProgressBar(percentage);
         }
 
         public void FormEnabled(bool enabled)

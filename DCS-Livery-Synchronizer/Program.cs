@@ -16,7 +16,7 @@ namespace DCS_Livery_Synchronizer
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainWindow());
+            Application.Run(new MainForm());
         }
     }
 }

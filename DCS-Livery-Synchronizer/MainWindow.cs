@@ -18,8 +18,7 @@ namespace DCS_Livery_Synchronizer
         {
             InitializeComponent();
         }
-
-     
+        
 
         private void bt_FindLiveriesPath_Click(object sender, EventArgs e)
         {

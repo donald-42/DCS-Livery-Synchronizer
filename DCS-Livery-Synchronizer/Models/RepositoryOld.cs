@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 
-namespace DCS_Livery_Synchronizer.helper
+namespace DCS_Livery_Synchronizer
 {
     /// <summary>
     /// Represents a repository, which is basicly an XML representation of downloadlinks and checksums for zip files.
     /// </summary>
-    public class Repository
+    public class RepositoryOld
     {
         public string programmversion { get; set; } //programm version, this repo was created with (for compatibility reasions)
         public string name { get; set; } //readable name of the repository
@@ -27,7 +27,7 @@ namespace DCS_Livery_Synchronizer.helper
         /// Reads everything from the given repositorystring
         /// </summary>
 
-        public Repository(string fileContent)
+        public RepositoryOld(string fileContent)
         {
             //using XmlDocument to Read DOM structure
             XmlDocument doc = new XmlDocument();
@@ -63,7 +63,7 @@ namespace DCS_Livery_Synchronizer.helper
             }
         }
 
-        public Repository(string programmversion, string name, Controller ctrl)
+        public RepositoryOld(string programmversion, string name, Controller ctrl)
         {
             this.programmversion = programmversion;
             this.name = name;
@@ -71,6 +71,11 @@ namespace DCS_Livery_Synchronizer.helper
             controller = ctrl;
         }
 
+        /// <summary>
+        /// Creates a list of liveries based on pathes to their folders.
+        /// TODO: Move this to controller.
+        /// </summary>
+        /// <param name="liveryPathes"></param>
         public void createList(List<string> liveryPathes)
         {
             foreach (string liverypath in liveryPathes)
@@ -114,8 +119,10 @@ namespace DCS_Livery_Synchronizer.helper
             sb.AppendLine("</" + attribute + ">");
         }
 
+        
         /// <summary>
         /// saves the XML as well as a compressed version of all the skins.
+        /// TODO: Move to Controller.
         /// </summary>
         /// <param name="path"></param>
         public void saveRepo(string path)
@@ -152,6 +159,7 @@ namespace DCS_Livery_Synchronizer.helper
             } catch (Exception e)
             {
                 MessageBox.Show("Error: Writing Repositoryfile failed.");
+                Console.WriteLine(e.ToString());
                 return;
             }
 

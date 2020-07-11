@@ -15,10 +15,7 @@ namespace DCS_Livery_Synchronizer
         [XmlAttribute]
         public string version;
         [XmlAttribute]
-        public string dcssavedgames;
-
-
-        
+        public string dcssavedgames;        
     }
 
 

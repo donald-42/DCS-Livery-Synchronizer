@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DCS_Livery_Synchronizer.helper
+namespace DCS_Livery_Synchronizer
 {
     /// <summary>
     /// Class to read and modify Description.lua from Liveries
