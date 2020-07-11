@@ -67,15 +67,27 @@ namespace DCS_Livery_Synchronizer
                 DialogResult dialogResult = MessageBox.Show("Livery at \n" + installPath + "\nalready Exists.\nDo you want to overwrite it? All files in the directory will be permanently deleted. ", "Folder Already Exists", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
                 {
-                    Directory.Delete(installPath, true);
-                    //Extract and install to the right folder:
-                    ZipFile.ExtractToDirectory(Path.Combine(tempPath, livery.url), installPath);
+                    try
+                    {
+                        Directory.Delete(installPath, true);
+                        //Extract and install to the right folder:
+                        ZipFile.ExtractToDirectory(Path.Combine(tempPath, livery.url), installPath);
+                    } catch (Exception exc)
+                    {
+                        parent.SetCurrentErrorMessage("Fatal Error: Could not extract the livery. Livery could not be installed.\n" + exc.ToString());
+                    }
                 }
             }
             else
             {
-                Directory.CreateDirectory(installPath);
-                ZipFile.ExtractToDirectory(Path.Combine(tempPath, livery.url), installPath);
+                try
+                {
+                    Directory.CreateDirectory(installPath);
+                    ZipFile.ExtractToDirectory(Path.Combine(tempPath, livery.url), installPath);
+                } catch (Exception exc)
+                {
+                    parent.SetCurrentErrorMessage("Fatal Error while extracting the Livery. Livery could not be installed.\n" + exc.ToString());
+                }
             }
             DownloadNext();
         }

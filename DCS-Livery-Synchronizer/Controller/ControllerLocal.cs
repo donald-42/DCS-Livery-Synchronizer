@@ -94,7 +94,7 @@ namespace DCS_Livery_Synchronizer
                             //System.Console.WriteLine(Path.GetFileName(livpath));
                             Livery livery = new Livery();
                             livery.aircraft = aircrafttype;
-                            livery.path = livpath;
+                            livery.path = livery.aircraft + "\\" + Path.GetFileName(livpath);
                             Description dsc = new Description(descriptionpath);
                             livery.name = dsc.GetName();
                             livery.countries = dsc.GetCountries();
