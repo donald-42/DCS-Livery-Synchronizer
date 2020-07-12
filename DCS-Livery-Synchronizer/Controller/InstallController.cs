@@ -86,13 +86,13 @@ namespace DCS_Livery_Synchronizer
         /// <param name="e"></param>
         private void DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
-            //divider is needed, so that the progress off e.g. 5 downloads gets reduced to 1/5
-            float divider = (float)(1) / numberOfDownloads;
-            //additor is needed, so that the progress of the second download gets added to the 
-            //completed partprogress of the first download
-            float additor = (float)((float)(numberOfDownloads - installQueue.Count) / numberOfDownloads) * 100;
-            downloadProgress = (int)(e.ProgressPercentage * divider) + (int)additor;
-            parent.setDownloadProgress(downloadProgress);
+            ////divider is needed, so that the progress off e.g. 5 downloads gets reduced to 1/5
+            //float divider = (float)(1) / numberOfDownloads;
+            ////additor is needed, so that the progress of the second download gets added to the 
+            ////completed partprogress of the first download
+            //float additor = (float)((float)(numberOfDownloads - installQueue.Count) / numberOfDownloads) * 100;
+            //downloadProgress = (int)(e.ProgressPercentage * divider) + (int)additor;
+            //parent.setDownloadProgress(downloadProgress);
             
         }
 

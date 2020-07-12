@@ -14,6 +14,8 @@ namespace DCS_Livery_Synchronizer
 {
     public partial class MainForm : Form 
     {
+        private readonly string[] InstallStateDisplayString;
+
         private NewController controller;
         private String savepath;
         public MainForm()
@@ -26,6 +28,14 @@ namespace DCS_Livery_Synchronizer
             controller.InstallCompleted += Controller_InstallCompleted;
             controller.RepoCreationProgressChanged += Controller_RepoCreationProgressChanged;
             controller.RepoCreationCompleted += Controller_RepoCreationCompleted;
+
+            this.InstallStateDisplayString = new string[6];
+            this.InstallStateDisplayString[(int)InstallState.NotStarted] = "Not started";
+            this.InstallStateDisplayString[(int)InstallState.Download] = "Downloading";
+            this.InstallStateDisplayString[(int)InstallState.Unpack] = "Unpacking files";
+            this.InstallStateDisplayString[(int)InstallState.Resize] = "Resizing images";
+            this.InstallStateDisplayString[(int)InstallState.Write] = "Writing files";
+            this.InstallStateDisplayString[(int)InstallState.Done] = "Done";
         }
 
         /// <summary>
@@ -273,35 +283,80 @@ namespace DCS_Livery_Synchronizer
         /// <param name="e"></param>
         private void btInstallSelected_Click(object sender, EventArgs e)
         {
-            string installDir = controller.Model.Settings.dcssavedgames.TrimEnd('/', '\\') + "\\Liveries";
+            
 
-            //List<Livery> installList = new List<Livery>();
-            List<DownloadHandle> downloads = new List<DownloadHandle>();
-            foreach(DataGridViewRow row in gvInstallRepo.Rows)
+            List<(Livery, DataGridViewRow)> installList = new List<(Livery, DataGridViewRow)>();
+            foreach (DataGridViewRow row in gvInstallRepo.Rows) // TODO: Shouldn't be working directly with the row here; make an abstracting that gets updated when row items change.
             {
-                // Should probably uncouple cell order and enabled value here.
-                if (bool.Parse(row.Cells[0].Value.ToString()))
+                if ((bool)row.Cells[0].Value)
                 {
-                    var aircrafttype = row.Cells[1].Value.ToString();
-                    var aircraftname = row.Cells[2].Value.ToString();
+                    var aircraftType = row.Cells[1].Value.ToString();
+                    var aircraftName = row.Cells[2].Value.ToString();
 
-                    var lv = controller.Model.OnlineRepository.GetLivery(aircrafttype, aircraftname);
+                    var lv = this.controller.Model.OnlineRepository.GetLivery(aircraftType, aircraftName);
 
-                    //if livery found, add it to the installlist.
-                    if(lv != null)
+                    if (lv != null) installList.Add((lv, row));
+                    else throw new Exception("What the fuck?");
+                }
+            }
+
+            int count = installList.Count;
+            Task[] tasks = new Task[count];
+            var factory = new InstallTaskFactory(this.controller.Model);
+
+            for (int i = 0; i < count; i++)
+            {
+                var lv = installList[i].Item1;
+                var row = installList[i].Item2;
+                tasks[i] = factory.CreateDownloadAndInstallTask(lv, (state, progress) =>
+                {
+                    progress *= 100;
+
+                    if (state == InstallState.Done)
                     {
-                        downloads.Add(new DownloadHandle(controller.Model.OnlineRepository, lv, installDir));
-                        //installList.Add(lv);
+                        row.Cells[3].Value = "Installed";
+                    }
+                    else if (state == InstallState.Error)
+                    {
+                        row.Cells[3].Value = "ERROR";
                     }
                     else
                     {
-                        MessageBox.Show("Fatal Error on livery selection.");
+                        row.Cells[3].Value = $"{(int)Math.Ceiling(progress)}% {this.InstallStateDisplayString[(int)state]}...";
                     }
-                }
+                });
+                //tasks[i].Start();
             }
-            //controller.InstallLiveriesAsync(liverylist);
-            this.controller.DownloadAndInstallLiveries(downloads);
-            this.Enabled = true;
+
+            //string installDir = controller.Model.Settings.dcssavedgames.TrimEnd('/', '\\') + "\\Liveries";
+
+            ////List<Livery> installList = new List<Livery>();
+            //List<DownloadHandle> downloads = new List<DownloadHandle>();
+            //foreach(DataGridViewRow row in gvInstallRepo.Rows)
+            //{
+            //    // Should probably uncouple cell order and enabled value here.
+            //    if (bool.Parse(row.Cells[0].Value.ToString()))
+            //    {
+            //        var aircrafttype = row.Cells[1].Value.ToString();
+            //        var aircraftname = row.Cells[2].Value.ToString();
+
+            //        var lv = controller.Model.OnlineRepository.GetLivery(aircrafttype, aircraftname);
+
+            //        //if livery found, add it to the installlist.
+            //        if(lv != null)
+            //        {
+            //            downloads.Add(new DownloadHandle(controller.Model.OnlineRepository, lv, installDir));
+            //            //installList.Add(lv);
+            //        }
+            //        else
+            //        {
+            //            MessageBox.Show("Fatal Error on livery selection.");
+            //        }
+            //    }
+            //}
+            ////controller.InstallLiveriesAsync(liverylist);
+            //this.controller.DownloadAndInstallLiveries(downloads);
+            //this.Enabled = true;
         }
 
         private void MainForm_Shown(object sender, EventArgs e)

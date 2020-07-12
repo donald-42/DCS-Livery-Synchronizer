@@ -55,6 +55,7 @@
     <Compile Include="Controller\InstallController.cs" />
     <Compile Include="Controller\ControllerLocal.cs" />
     <Compile Include="Controller\ControllerSettings.cs" />
+    <Compile Include="Controller\Progressable.cs" />
     <Compile Include="Models\DownloadHandle.cs" />
     <Compile Include="Models\Model.cs" />
     <Compile Include="Controller\NewController.cs" />
