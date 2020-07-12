@@ -17,17 +17,13 @@ namespace DCS_Livery_Synchronizer
         public InstallTaskFactory(Model model)
         {
             this.Model = model;
-            
         }
 
         public Task CreateDownloadAndInstallTask(Livery livery, Action<InstallState, float> onProgressUpdate)
         {
-            string installDir = $"{this.Model.Settings.dcssavedgames.TrimEnd('/', '\\')}\\Liveries\\{livery.path}";
+            string installDir = $"{ this.Model.Settings.dcssavedgames.TrimEnd('/', '\\')}\\Liveries\\{livery.path}";
 
-            var client = new RestClient(this.Model.GetOnlineRepoBaseAddress());
-            client.AddDefaultHeader("Accept", "*/*");
-
-            var downloader = new Downloader(client);
+            var downloader = new Downloader(livery, this.Model.GetOnlineRepoBaseAddress());
             var unpacker = new Unpacker();
             var resizer = new Resizer();
             var writer = new FileWriter(installDir);
@@ -41,7 +37,7 @@ namespace DCS_Livery_Synchronizer
                 writer.OnProgressUpdate         += (s, p) => { progress = 0.95f + p * 0.05f; onProgressUpdate(s, progress); };
             }
 
-            var downloadTask = new Task<byte[]>(() => downloader.Run(livery));
+            var downloadTask = new Task<byte[]>(() => downloader.Run());
             downloadTask.ContinueWith(t => { onProgressUpdate?.Invoke(InstallState.Error, progress); this.OnFailed(t); }, TaskContinuationOptions.OnlyOnFaulted);
 
             var unpackTask = downloadTask.ContinueWith(f => unpacker.Run(f.Result), TaskContinuationOptions.OnlyOnRanToCompletion)
@@ -65,28 +61,42 @@ namespace DCS_Livery_Synchronizer
         private void OnFailed(Task task)
         {
             StringBuilder errorMessage = new StringBuilder();
-            Exception ex = task.Exception;
-            while (ex != null)
+
+            Stack<Exception> exceptions = new Stack<Exception>();
+            exceptions.Push(task.Exception);
+
+            while (exceptions.Count > 0)
             {
+                var ex = exceptions.Pop();
+                if (ex is TaskCanceledException)
+                {
+                    // TaskCanceledException is just telling us a task wasn't run... But otherwise nothing useful.
+                    var tc = ex as TaskCanceledException;
+                    if (tc.Task.Exception != null)
+                    {
+                        exceptions.Push(tc.Task.Exception);
+                    }
+                    continue;
+                }
+
+                errorMessage.AppendLine($"[{ex.GetType().Name}: {ex.Message}]");
+                errorMessage.AppendLine(ex.StackTrace);
+
                 if (ex is AggregateException)
                 {
                     var ag = ex as AggregateException;
-                    errorMessage.AppendLine($"AGGREGATE EXCEPTION: {ex.Message}");
-                    foreach (var e in ag.InnerExceptions)
+                    for (int i = ag.InnerExceptions.Count - 1; i >= 0; i--)
                     {
-                        errorMessage.AppendLine($"- [{e.GetType().Name}: {e.Message}]");
-                        errorMessage.AppendLine(e.StackTrace);
+                        exceptions.Push(ag.InnerExceptions[i]);
                     }
-
-                    ex = ag.InnerException; // Skip 1 exception.
                 }
                 else
                 {
-                    errorMessage.AppendLine($"[{ex.GetType().Name}: {ex.Message}]");
-                    errorMessage.AppendLine(ex.StackTrace);
+                    if (ex.InnerException != null)
+                    {
+                        exceptions.Push(ex.InnerException);
+                    }
                 }
-
-                ex = ex.InnerException;
             }
 
             MessageBox.Show(errorMessage.ToString(), "UNHANDLED EXCEPTION");
@@ -116,28 +126,40 @@ namespace DCS_Livery_Synchronizer
 
     public class Downloader : Progressable
     {
-        private readonly RestClient Client;
+        private readonly Livery Livery;
+        private readonly string Address;
 
-        public Downloader(RestClient client)
-        {
-            this.Client = client;
-        }
-
-        public byte[] Run(Livery livery)
+        public Downloader(Livery livery, string address)
         {
             _ = livery ?? throw new ArgumentNullException(nameof(livery));
+            this.Livery = livery;
+            this.Address = address;
+        }
 
+        public byte[] Run()
+        {
             this.SetProgress(InstallState.Download, 0);
 
-            var request = new RestRequest(livery.url);
-            var response = this.Client.Execute(request, Method.GET);
+            string url = $"{this.Address.TrimEnd('/')}/{this.Livery.url}";
 
-            if (response.StatusCode != HttpStatusCode.OK) throw new Exception($"{(int)response.StatusCode}: {response.StatusCode.ToString()}");
+            var client = new WebClient();
+            client.DownloadProgressChanged += this.OnProgressUpdated;
+            var task = client.DownloadDataTaskAsync(url);
+            task.Wait();
+            client.DownloadProgressChanged -= this.OnProgressUpdated;
 
-            var data = response.RawBytes;
+            if (task.Status != TaskStatus.RanToCompletion)
+            {
+                throw task.Exception;
+            }
 
             this.SetProgress(InstallState.Download, 1);
-            return data;
+            return task.Result;
+        }
+
+        private void OnProgressUpdated(object sender, DownloadProgressChangedEventArgs e)
+        {
+            this.SetProgress(InstallState.Download, e.ProgressPercentage / 100f);
         }
     }
     public class Unpacker : Progressable
@@ -148,58 +170,32 @@ namespace DCS_Livery_Synchronizer
 
             this.SetProgress(InstallState.Unpack, 0);
 
-            object sync = new object();
-
-            int completedFiles = 0;
+            //File.WriteAllBytes($@"C:\TestOutput\{Guid.NewGuid().ToString()}", zippedArchieveBytes);
 
             using (var archiveStream = new MemoryStream(zippedArchieveBytes))
-            using (ZipArchive archive = new ZipArchive(archiveStream, ZipArchiveMode.Read))
+            using (var archive = Ionic.Zip.ZipFile.Read(archiveStream))
             {
-                int count = archive.Entries.Count;
-                var tasks = new Task<FileData>[count];
-
-                for (int i = 0; i < count; i++)
-                {
-                    var entry = archive.Entries[i];
-                    tasks[i] = Task.Run<FileData>(() =>
-                    {
-                        // Skip directories.
-                        if (entry.FullName[entry.FullName.Length - 1] == '/' || entry.FullName[entry.FullName.Length - 1] == '\\')
-                        {
-                            return null;
-                        }
-
-                        using (var zippedFile = entry.Open())
-                        using (var data = new MemoryStream())
-                        {
-                            zippedFile.CopyTo(data);
-                            return new FileData(entry.FullName, data.ToArray());
-                        }
-                    })
-                    .ContinueWith(f =>
-                    {
-                        lock (sync)
-                        {
-                            completedFiles++;
-                            this.SetProgress(InstallState.Unpack, (float)completedFiles / count);
-                        }
-                        return f.Result;
-                    },
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
-                    ;
-                }
-
-                Task.WaitAll(tasks);
-
-                if (completedFiles != count)
-                {
-                    // TODO: Something gone did wrong!
-                }
+                int count = archive.Count;
+                //var tasks = new Task<FileData>[count];
 
                 List<FileData> fileList = new List<FileData>();
+
+                // TODO: Taskify this for SPEEEED ?
                 for (int i = 0; i < count; i++)
                 {
-                    if (tasks[i].Result != null) fileList.Add(tasks[i].Result);
+                    this.SetProgress(InstallState.Unpack, (float)i / count);
+
+                    var entry = archive[i];
+                    if (entry.IsDirectory)
+                    {
+                        continue;
+                    }
+
+                    using (var data = new MemoryStream())
+                    {
+                        entry.Extract(data);
+                        fileList.Add( new FileData(entry.FileName, data.ToArray()) );
+                    }
                 }
 
                 var files = new FileData[fileList.Count];
@@ -246,6 +242,7 @@ namespace DCS_Livery_Synchronizer
 
             int count = files.Length;
             var tasks = new Task[count];
+            object sync = new object();
 
             for (int i = 0; i < count; i++)
             {
@@ -254,9 +251,15 @@ namespace DCS_Livery_Synchronizer
                 {
                     string installPath = $"{this.DestinationFolder}\\{file.FileName}";
                     var dir = Path.GetDirectoryName(installPath);
-                    // TODO: Could we be creating the same directory at the same time here? Could that be an issue?
-                    // Might need to sync this.
-                    if (Directory.Exists(dir) == false) Directory.CreateDirectory(dir); 
+
+                    // Don't know if this lock is necessary here, but I've added it for good measure.
+                    lock (sync)
+                    {
+                        if (Directory.Exists(dir) == false)
+                        {
+                            Directory.CreateDirectory(dir); 
+                        }
+                    }
 
                     File.WriteAllBytes(installPath, file.Bytes);
                 });

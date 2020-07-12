@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DotNetZip, Version=1.13.8.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
+      <HintPath>..\packages\DotNetZip.1.13.8\lib\net40\DotNetZip.dll</HintPath>
+    </Reference>
     <Reference Include="RestSharp, Version=106.11.4.0, Culture=neutral, PublicKeyToken=598062e77f915f75, processorArchitecture=MSIL">
       <HintPath>..\packages\RestSharp.106.11.4\lib\net452\RestSharp.dll</HintPath>
     </Reference>
@@ -55,7 +58,7 @@
     <Compile Include="Controller\InstallController.cs" />
     <Compile Include="Controller\ControllerLocal.cs" />
     <Compile Include="Controller\ControllerSettings.cs" />
-    <Compile Include="Controller\Progressable.cs" />
+    <Compile Include="Controller\InstallTaskFactory.cs" />
     <Compile Include="Models\DownloadHandle.cs" />
     <Compile Include="Models\Model.cs" />
     <Compile Include="Controller\NewController.cs" />
