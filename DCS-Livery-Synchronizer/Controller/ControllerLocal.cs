@@ -35,7 +35,7 @@ namespace DCS_Livery_Synchronizer
         /// <returns></returns>
         private string CalculateChecksum(Livery livery)
         {
-            var path = Path.Combine(parent.GetModel().GetSettings().dcssavedgames, "Liveries", livery.path);
+            var path = Path.Combine(parent.Model.Settings.dcssavedgames, "Liveries", livery.path);
             // assuming you want to include nested folders
             var files = Directory.GetFiles(path, "*.*", SearchOption.TopDirectoryOnly)
                                     .OrderBy(p => p).ToList();
@@ -66,7 +66,7 @@ namespace DCS_Livery_Synchronizer
         /// </summary>
         public void LoadLocalRepository()
         {
-            var path = parent.GetModel().GetSettings().dcssavedgames;
+            var path = parent.Model.Settings.dcssavedgames;
 
             if (!Directory.Exists(path))
             {
@@ -74,7 +74,7 @@ namespace DCS_Livery_Synchronizer
                 return;
             }
 
-            Repository localRepo = parent.GetModel().GetLocalRepository();
+            Repository localRepo = parent.Model.LocalRepository;
             localRepo.GetLiveries().Clear();
 
             //Reads all the existing liverys installed in the Saved game folder
@@ -105,7 +105,7 @@ namespace DCS_Livery_Synchronizer
                             {
                                 livery.countries = ""; // no countries set or not readable, this should stand for all countries
                             }
-                            livery.checksum = CalculateChecksum(livery);
+                            //livery.checksum = CalculateChecksum(livery);
                             livery.url = livery.aircraft + "/" + Path.GetFileName(livery.path) + ".zip";
                             localRepo.AddLivery(livery);
                         }
@@ -136,7 +136,7 @@ namespace DCS_Livery_Synchronizer
             var repoFileContent = new StringBuilder();
             repoFileContent.AppendLine("<repository>"); //start of repo information
 
-            repoFileContent.AppendLine(AddAttributeToRepoFile("programmversion", parent.GetModel().GetSettings().version));
+            repoFileContent.AppendLine(AddAttributeToRepoFile("programmversion", parent.Model.Settings.version));
             repoFileContent.AppendLine(AddAttributeToRepoFile("name", name));
 
             foreach (Livery livery in liveries)
@@ -177,7 +177,7 @@ namespace DCS_Livery_Synchronizer
                 {
                     File.Delete(Path.Combine(path, livery.path));
                 }
-                await Task.Run(() => ZipFile.CreateFromDirectory(Path.Combine(parent.GetModel().GetSettings().dcssavedgames, "Liveries", livery.path), Path.Combine(path, livery.aircraft, Path.GetFileName(livery.path) + ".zip")));
+                await Task.Run(() => ZipFile.CreateFromDirectory(Path.Combine(parent.Model.Settings.dcssavedgames, "Liveries", livery.path), Path.Combine(path, livery.aircraft, Path.GetFileName(livery.path) + ".zip")));
                 var percentage =  (double)(i) / liveries.Count * 100;
                 repoCreationProgress = (int)percentage;
                 parent.onRepoCreationProgressChanged(this, EventArgs.Empty);
@@ -200,6 +200,5 @@ namespace DCS_Livery_Synchronizer
             sb.Append("</" + attribute + ">");
             return sb.ToString();
         }
-
     }
 }

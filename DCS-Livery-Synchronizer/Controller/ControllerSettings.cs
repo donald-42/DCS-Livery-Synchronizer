@@ -41,7 +41,7 @@ namespace DCS_Livery_Synchronizer
                 System.Console.WriteLine("Folder does not exist");
             }
 
-            var settings = parent.GetModel().GetSettings();
+            var settings = parent.Model.Settings;
 
             //Check if settings file exists, if not, create it and write defaults
             if (!File.Exists(settingsPath))
@@ -68,7 +68,7 @@ namespace DCS_Livery_Synchronizer
                 using (var reader = XmlReader.Create(settingsPath))
                 {
                     settings = (Settings)serializer.Deserialize(reader);
-                    parent.GetModel().SetSettings(settings);
+                    this.parent.Model.SetSettings((Settings)settings);
                     //System.Console.WriteLine("Version is {0}", settings.version);
                     //System.Console.WriteLine("Path is {0}", parent.GetModel().GetSettings().dcssavedgames);
                 }
@@ -87,7 +87,7 @@ namespace DCS_Livery_Synchronizer
                 return false;
             } 
 
-            parent.GetModel().GetSettings().dcssavedgames = path;
+            parent.Model.Settings.dcssavedgames = path;
             return true;
         }
 
@@ -96,7 +96,7 @@ namespace DCS_Livery_Synchronizer
         /// </summary>
         public void SaveSettings()
         {
-            var settings = parent.GetModel().GetSettings();
+            var settings = parent.Model.Settings;
             if(settings == null)
             {
                 return;

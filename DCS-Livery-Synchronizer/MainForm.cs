@@ -102,91 +102,103 @@ namespace DCS_Livery_Synchronizer
         /// </summary>
         private void ReloadCurrentTab()
         {
-            if(tabControl.SelectedIndex < 0) //if no tab is active, activate tab 1
+            if (this.tabControl.SelectedIndex < 0) //if no tab is active, activate tab 0
             {
-                tabControl.SelectedIndex = 0;
+                this.tabControl.SelectedIndex = 0;
             }
 
-            var model = controller.GetModel();
-
-            switch(tabControl.SelectedIndex)
+            switch (this.tabControl.SelectedIndex)
             {
-                case 0: //Install from online repo tab.
-                    var onlineRepo = model.GetOnlineRepository();
-                    //fill information into the gridview
-                    gvInstallRepo.Rows.Clear();
-                    foreach (Livery lv in onlineRepo.GetLiveries())
-                    {
-                        Object[] row = new object[4];
-                        row[0] = true;
-                        row[1] = lv.aircraft;
-                        row[2] = lv.name;
-                        //check if livery is already installed
-                        switch (controller.CheckLiveryInstalled(lv))
-                        {
-                            case 0:
-                                row[3] = "Not Installed";
-                                break;
-                            case 1:
-                                row[3] = "Different";
-                                break;
-                            case 2:
-                                row[3] = "Installed";
-                                row[0] = false;
-                                break;
-                        }
-                        gvInstallRepo.Rows.Add(row);
-                    }
-                    if(gvInstallRepo.Rows.Count > 0)
-                    {
-                        btInstallSelected.Enabled = true;
-                        btInstallSelected.BackColor = Color.LimeGreen;
-                    }
-                    else
-                    {
-                        btInstallSelected.Enabled = false;
-                        btInstallSelected.BackColor = Color.LightGray;
-                    }
+                case 0:
+                    this.InstallTab();
                     break;
-                case 1: //Local Repo tab
-                    gvLocalLiveries.Rows.Clear();
-                    var localRepo = controller.GetModel().GetLocalRepository();
-                    
-                    foreach(Livery lv in localRepo.GetLiveries())
-                    {
-                        Object[] row = new object[5];
-                        row[0] = true;
-                        row[1] = lv.aircraft;
-                        row[2] = lv.name;
-                        row[3] = lv.path;
-                        gvLocalLiveries.Rows.Add(row);
-                    }
-                    if (gvLocalLiveries.Rows.Count > 0)
-                    {
-                        btCreateRepository.Enabled = true;
-                        btCreateRepository.BackColor = Color.LimeGreen;
-                    }
-                    else
-                    {
-                        btCreateRepository.Enabled = false;
-                        btCreateRepository.BackColor = Color.LightGray;
-                    }
-
+                case 1:
+                    this.LocalRepoTab();
                     break;
-                case 3: //Settings tab
-                    if(model.GetSettings() == null)
-                    {
-                        controller.LoadSettings();
-                    }
-                    if(model.GetSettings() == null)
-                    {
-                        Console.WriteLine("Fatal Error: Can not load settings");
-                        break;
-                    }
-                    var settings = model.GetSettings();
-                    tbPathToDCSSavegame.Text = settings.dcssavedgames;
+                case 3:
+                    this.SettingsTab();
                     break;
             }
+        }
+
+        private void LocalRepoTab()
+        {
+            gvLocalLiveries.Rows.Clear();
+            var localRepo = controller.Model.LocalRepository;
+
+            foreach (Livery lv in localRepo.GetLiveries())
+            {
+                Object[] row = new object[5];
+                row[0] = true;
+                row[1] = lv.aircraft;
+                row[2] = lv.name;
+                row[3] = lv.path;
+                gvLocalLiveries.Rows.Add(row);
+            }
+            if (gvLocalLiveries.Rows.Count > 0)
+            {
+                btCreateRepository.Enabled = true;
+                btCreateRepository.BackColor = Color.LimeGreen;
+            }
+            else
+            {
+                btCreateRepository.Enabled = false;
+                btCreateRepository.BackColor = Color.LightGray;
+            }
+        }
+
+        private void InstallTab()
+        {
+            var onlineRepo = controller.Model.OnlineRepository;
+            //fill information into the gridview
+            gvInstallRepo.Rows.Clear();
+            foreach (Livery lv in onlineRepo.GetLiveries())
+            {
+                Object[] row = new object[4];
+                row[0] = true;
+                row[1] = lv.aircraft;
+                row[2] = lv.name;
+                row[3] = lv.Status;
+                //check if livery is already installed
+                //switch (controller.CheckLiveryInstalled(lv))
+                //{
+                //    case 0:
+                //        row[3] = "Not Installed";
+                //        break;
+                //    case 1:
+                //        row[3] = "Different";
+                //        break;
+                //    case 2:
+                //        row[3] = "Installed";
+                //        row[0] = false;
+                //        break;
+                //}
+                gvInstallRepo.Rows.Add(row);
+            }
+            if (gvInstallRepo.Rows.Count > 0)
+            {
+                btInstallSelected.Enabled = true;
+                btInstallSelected.BackColor = Color.LimeGreen;
+            }
+            else
+            {
+                btInstallSelected.Enabled = false;
+                btInstallSelected.BackColor = Color.LightGray;
+            }
+        }
+
+        private void SettingsTab()
+        {
+            if (this.controller.Model.Settings == null)
+            {
+                controller.LoadSettings();
+            }
+            if (controller.Model.Settings == null)
+            {
+                throw new Exception("Fatal Error: Can not load settings");
+            }
+            var settings = controller.Model.Settings;
+            tbPathToDCSSavegame.Text = settings.dcssavedgames;
         }
 
         /// <summary>
@@ -239,7 +251,7 @@ namespace DCS_Livery_Synchronizer
                 {
                     var liverypath = row.Cells[3].Value.ToString();
 
-                    var lv = controller.GetModel().GetLocalRepository().GetLivery(liverypath);
+                    var lv = controller.Model.LocalRepository.GetLivery(liverypath);
                     if(lv != null)
                     {
                         installList.Add(lv);
@@ -261,20 +273,25 @@ namespace DCS_Livery_Synchronizer
         /// <param name="e"></param>
         private void btInstallSelected_Click(object sender, EventArgs e)
         {
-            List<Livery> installList = new List<Livery>();
+            string installDir = controller.Model.Settings.dcssavedgames.TrimEnd('/', '\\') + "\\Liveries";
+
+            //List<Livery> installList = new List<Livery>();
+            List<DownloadHandle> downloads = new List<DownloadHandle>();
             foreach(DataGridViewRow row in gvInstallRepo.Rows)
             {
+                // Should probably uncouple cell order and enabled value here.
                 if (bool.Parse(row.Cells[0].Value.ToString()))
                 {
                     var aircrafttype = row.Cells[1].Value.ToString();
                     var aircraftname = row.Cells[2].Value.ToString();
 
-                    var lv = controller.GetModel().GetOnlineRepository().GetLivery(aircrafttype, aircraftname);
+                    var lv = controller.Model.OnlineRepository.GetLivery(aircrafttype, aircraftname);
 
                     //if livery found, add it to the installlist.
                     if(lv != null)
                     {
-                        installList.Add(lv);
+                        downloads.Add(new DownloadHandle(controller.Model.OnlineRepository, lv, installDir));
+                        //installList.Add(lv);
                     }
                     else
                     {
@@ -282,8 +299,9 @@ namespace DCS_Livery_Synchronizer
                     }
                 }
             }
-            controller.InstallLiveriesAsync(installList);
-            this.Enabled = false;
+            //controller.InstallLiveriesAsync(liverylist);
+            this.controller.DownloadAndInstallLiveries(downloads);
+            this.Enabled = true;
         }
 
         private void MainForm_Shown(object sender, EventArgs e)

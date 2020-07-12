@@ -11,16 +11,17 @@ namespace DCS_Livery_Synchronizer
     /// </summary>
     public class Model
     {
-        Repository onlineRepo;
-        string onlineRepoBaseAddress; //URL to the directory of online repo. 
-        Repository localRepo;
-        Settings settings;
+        private string onlineRepoBaseAddress; //URL to the directory of online repo. 
+
+        public readonly Repository OnlineRepository;
+        public readonly Repository LocalRepository;
+        public readonly Settings Settings;
 
         public Model()
         {
-            onlineRepo = new Repository();
-            localRepo = new Repository();
-            settings = new Settings();
+            this.OnlineRepository = new Repository();
+            this.LocalRepository = new Repository();
+            this.Settings = new Settings();
         }
 
         /// <summary>
@@ -37,32 +38,32 @@ namespace DCS_Livery_Synchronizer
             return onlineRepoBaseAddress;
         }
 
-        /// <summary>
-        /// Returns the currently active online repository. Could be empty if no repo is active.
-        /// </summary>
-        /// <returns></returns>
-        public Repository GetOnlineRepository()
-        {
-            return onlineRepo;
-        }
+        ///// <summary>
+        ///// Returns the currently active online repository. Could be empty if no repo is active.
+        ///// </summary>
+        ///// <returns></returns>
+        //public Repository GetOnlineRepository()
+        //{
+        //    return OnlineRepo;
+        //}
 
-        /// <summary>
-        /// Returns the local repository. Gets initialized after program start.
-        /// </summary>
-        /// <returns></returns>
-        public Repository GetLocalRepository()
-        {
-            return localRepo;
-        }
+        ///// <summary>
+        ///// Returns the local repository. Gets initialized after program start.
+        ///// </summary>
+        ///// <returns></returns>
+        //public Repository GetLocalRepository()
+        //{
+        //    return LocalRepo;
+        //}
 
-        /// <summary>
-        /// Gets the currently active Settings-Model. Gets initialized at programm start.
-        /// </summary>
-        /// <returns></returns>
-        public Settings GetSettings()
-        {
-            return settings;
-        }
+        ///// <summary>
+        ///// Gets the currently active Settings-Model. Gets initialized at programm start.
+        ///// </summary>
+        ///// <returns></returns>
+        //public Settings GetSettings()
+        //{
+        //    return Settings;
+        //}
 
         /// <summary>
         /// Sets a reference to a new Settings Model
@@ -70,7 +71,7 @@ namespace DCS_Livery_Synchronizer
         /// <param name="settings">Reference to settingsobject</param>
         public void SetSettings(Settings settings)
         {
-            this.settings = settings;
+            typeof(Model).GetField(nameof(Settings)).SetValue(this, settings);
         }
     }
 }

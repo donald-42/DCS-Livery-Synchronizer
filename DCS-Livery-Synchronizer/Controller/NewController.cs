@@ -21,10 +21,10 @@ namespace DCS_Livery_Synchronizer
     public class NewController
     {
         public const string programmversion = "0.1";
-        private ControllerInstall controllerInstall;
+        public readonly Model Model;
+        private InstallController controllerInstall;
         private ControllerSettings controllerSettings;
         private ControllerLocal controllerLocal;
-        private Model model;
         private string currentErrorMessage; //Last thrown error message.
 
         public event NewErrorEventHandler NewError;
@@ -36,8 +36,8 @@ namespace DCS_Livery_Synchronizer
 
         public NewController()
         {
-            model = new Model();
-            controllerInstall = new ControllerInstall(this);
+            this.Model = new Model();
+            controllerInstall = new InstallController(this);
             controllerSettings = new ControllerSettings(this);
             controllerLocal = new ControllerLocal(this);
         }
@@ -191,14 +191,14 @@ namespace DCS_Livery_Synchronizer
             OnModelChanged(EventArgs.Empty);
         }
 
-        /// <summary>
-        /// Get the databasis used by this controller.
-        /// </summary>
-        /// <returns>Current Databasis represented with Modelclasses. All accessible via this Object.</returns>
-        public Model GetModel()
-        {
-            return model;
-        }
+        ///// <summary>
+        ///// Get the databasis used by this controller.
+        ///// </summary>
+        ///// <returns>Current Databasis represented with Modelclasses. All accessible via this Object.</returns>
+        //public Model Model()
+        //{
+        //    return Model;
+        //}
 
         /// <summary>
         /// Loads settings from the settings.xml file in roaming. If no file exists, creates one with default values.
@@ -245,25 +245,32 @@ namespace DCS_Livery_Synchronizer
         {
             controllerInstall.InstallLiveriesAsync(liverylist);
         }
+        public void DownloadAndInstallLiveries(List<DownloadHandle> downloads)
+        {
+            controllerInstall.DownloadAndInstallLiveriesAsync(downloads);
+        }
 
         /// <summary>
         /// Function that checks a (online) livery against the local repository set. 
         /// </summary>
         /// <param name="livery"></param>
         /// <returns>0 = not installed, 1 = installed but different, 2 = installed and identical</returns>
-        public int  CheckLiveryInstalled(Livery livery)
+        public int  GetLiveryInstallStatus(Livery livery)
         {
-            if(model.GetLocalRepository().GetLiveries().Count < 1)
+            if (Model.LocalRepository.GetLiveries().Count == 0)
             {
                 return 0;
             }
 
             var status = 0;
 
-            foreach(Livery locallivery in model.GetLocalRepository().GetLiveries())
+            foreach(Livery locallivery in Model.LocalRepository.GetLiveries())
             {
-                if ((locallivery.aircraft.Equals(livery.aircraft)) && (locallivery.name.Equals(livery.name))){
-                    if (locallivery.checksum.Equals(livery.checksum))
+                if ((locallivery.aircraft.Equals(livery.aircraft)) && (locallivery.path.Equals(livery.path)))
+                {
+                    string checksum = locallivery.CalculateChecksum(this.Model.Settings);
+
+                    if (checksum.Equals(livery.checksum))
                     {
                         //Identical, as Checksum are the same
                         return 2;
@@ -276,6 +283,18 @@ namespace DCS_Livery_Synchronizer
                 }
             }
             return status;
+        }
+
+        public string InstallStatusToDisplayString(int status)
+        {
+            switch (status)
+            {
+                case 0: return "Not installed";
+                case 1: return "Update available";
+                case 2: return "Installed";
+                default:
+                    throw new Exception("Unknown status: " + status);
+            }
         }
     }
 }
