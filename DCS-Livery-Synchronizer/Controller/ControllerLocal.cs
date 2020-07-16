@@ -136,7 +136,7 @@ namespace DCS_Livery_Synchronizer
             var repoFileContent = new StringBuilder();
             repoFileContent.AppendLine("<repository>"); //start of repo information
 
-            repoFileContent.AppendLine(AddAttributeToRepoFile("programmversion", parent.Model.Settings.version));
+            repoFileContent.AppendLine(AddAttributeToRepoFile("programmversion", parent.Model.Settings.repoVersion));
             repoFileContent.AppendLine(AddAttributeToRepoFile("name", name));
 
             foreach (Livery livery in liveries)

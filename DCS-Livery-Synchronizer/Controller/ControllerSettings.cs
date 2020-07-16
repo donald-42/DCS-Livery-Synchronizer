@@ -46,7 +46,7 @@ namespace DCS_Livery_Synchronizer
             //Check if settings file exists, if not, create it and write defaults
             if (!File.Exists(settingsPath))
             {
-                settings.version = NewController.programmversion;
+                settings.repoVersion = NewController.repositoryVersion;
                 if (Directory.Exists(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS")))
                 {
                     settings.dcssavedgames = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS");

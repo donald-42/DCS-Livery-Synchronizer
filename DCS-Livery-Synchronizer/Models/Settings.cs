@@ -13,7 +13,7 @@ namespace DCS_Livery_Synchronizer
     public class Settings
     {
         [XmlAttribute]
-        public string version;
+        public string repoVersion;
         [XmlAttribute]
         public string dcssavedgames;        
     }

@@ -20,7 +20,7 @@ namespace DCS_Livery_Synchronizer
     /// </summary>
     public class NewController
     {
-        public const string programmversion = "0.1";
+        public const string repositoryVersion = "0.1";
         public readonly Model Model;
         private InstallController controllerInstall;
         private ControllerSettings controllerSettings;
