@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
+using System.Windows.Forms;
 
 namespace DCS_Livery_Synchronizer
 {
@@ -38,7 +39,7 @@ namespace DCS_Livery_Synchronizer
             {
                 //create file
                 Directory.CreateDirectory(roamingPath);
-                System.Console.WriteLine("Folder does not exist");
+                System.Console.WriteLine("Roaming Folder does not exist");
             }
 
             var settings = parent.Model.Settings;
@@ -47,18 +48,20 @@ namespace DCS_Livery_Synchronizer
             if (!File.Exists(settingsPath))
             {
                 settings.repoVersion = NewController.repositoryVersion;
-                if (Directory.Exists(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS")))
-                {
-                    settings.dcssavedgames = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS");
-                }
-                else if (Directory.Exists(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS.openbeta")))
+                if (Directory.Exists(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS.openbeta")))
                 {
                     settings.dcssavedgames = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS.openbeta");
+                    MessageBox.Show("DCS saved games path was automatically set to \n" + settings.dcssavedgames + "\nYou can change the path in the settings.");
+                }
+                else if (Directory.Exists(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS")))
+                {
+                    settings.dcssavedgames = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "saved games", "DCS");
+                    MessageBox.Show("DCS saved games path was automatically set to \n" + settings.dcssavedgames + "\nYou can change the path in the settings.");
                 }
                 else
                 {
                     parent.SetCurrentErrorMessage("Path to saved games\\DCS or saved games\\DCS.openbeta not found. Please specifiy in Settings.");
-                    Console.WriteLine("DCS savedgames path not found.");
+                    MessageBox.Show("DCS savedgames path not found.");
                 }
                 SaveSettings();
             }
