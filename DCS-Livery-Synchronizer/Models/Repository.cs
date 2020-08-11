@@ -37,6 +37,11 @@ namespace DCS_Livery_Synchronizer
             liverylist = new List<Livery>();
         }
 
+        public string GetProgrammVersion()
+        {
+            return programmversion;
+        }
+
         /// <summary>
         /// Set the programmversion this repo has been created with. For compatibility reasons if repo changes
         /// </summary>

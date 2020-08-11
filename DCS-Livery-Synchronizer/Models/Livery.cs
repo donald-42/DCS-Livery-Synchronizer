@@ -23,6 +23,8 @@ namespace DCS_Livery_Synchronizer
         public string countries;
         //Checksum of all files in the livery-folder. To verify this against any equal-named liverys
         public string checksum;
+        //Category, the livery belongs to. 
+        public string category;
 
         public string Status;
 

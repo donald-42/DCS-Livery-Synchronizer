@@ -127,7 +127,7 @@ namespace DCS_Livery_Synchronizer
             //check if directory is empty. If not, abort.
             if (Directory.GetFileSystemEntries(path).Length != 0)
             {
-                parent.SetCurrentErrorMessage("Target directory not empty! No files created");
+                parent.onRepoCreationFailed(this, new FailedEventArgs("Target directory not empty! No files created."));
                 return;
             }
 
@@ -141,13 +141,14 @@ namespace DCS_Livery_Synchronizer
 
             foreach (Livery livery in liveries)
             {
+                livery.checksum = livery.CalculateChecksum(parent.Model.Settings);
                 repoFileContent.AppendLine("<livery>");
                 repoFileContent.AppendLine(AddAttributeToRepoFile("liveryname", livery.name));
                 repoFileContent.AppendLine(AddAttributeToRepoFile("liverypath", livery.path));
                 repoFileContent.AppendLine(AddAttributeToRepoFile("liveryurl", livery.url));
                 repoFileContent.AppendLine(AddAttributeToRepoFile("liveryaircraft", livery.aircraft));
                 repoFileContent.AppendLine(AddAttributeToRepoFile("liverychecksum", livery.checksum));
-
+                repoFileContent.AppendLine(AddAttributeToRepoFile("liverycategory", livery.category));
                 repoFileContent.AppendLine("</livery>");
             }
 
@@ -159,12 +160,11 @@ namespace DCS_Livery_Synchronizer
             }
             catch (Exception e)
             {
-                parent.SetCurrentErrorMessage("Error: Writing Repositoryfile failed.");
                 Console.WriteLine(e.ToString());
+                parent.onRepoCreationFailed(this, new FailedEventArgs("Error: Writing Repositoryfile failed."));
                 return;
             }
 
-            Console.WriteLine("starting download");
             //starting compression of zip files.
             var i = 1;
             foreach (Livery livery in liveries)

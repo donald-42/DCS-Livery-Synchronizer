@@ -318,6 +318,16 @@ namespace DCS_Livery_Synchronizer
                 liv.Status = parent.InstallStatusToDisplayString(parent.GetLiveryInstallStatus(liv));
                 //liv.Status = parent.CheckLiveryInstalled(liv) ? "Installed" : "Not installed";
 
+                //category feature got added in repo version 0.2 -- this is the fallback.
+                if (onlineRepository.GetProgrammVersion().Equals("0.1"))
+                {
+                    liv.category = "Default";
+                } 
+                else
+                {
+                    liv.category = livery.SelectSingleNode("liverycategory").InnerText;
+                }
+
                 onlineRepository.AddLivery(liv);
             }
             

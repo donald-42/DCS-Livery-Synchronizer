@@ -28,6 +28,7 @@ namespace DCS_Livery_Synchronizer
             controller.InstallCompleted += Controller_InstallCompleted;
             controller.RepoCreationProgressChanged += Controller_RepoCreationProgressChanged;
             controller.RepoCreationCompleted += Controller_RepoCreationCompleted;
+            
 
             this.InstallStateDisplayString = new string[6];
             this.InstallStateDisplayString[(int)InstallState.NotStarted] = "Not started";
@@ -69,7 +70,7 @@ namespace DCS_Livery_Synchronizer
             MessageBox.Show("Selected liverys have been installed.", "Finished!");
             this.Enabled = true;
             btRefreshLocalRepository_Click(this, EventArgs.Empty);
-           
+
         }
 
         /// <summary>
@@ -97,13 +98,21 @@ namespace DCS_Livery_Synchronizer
             pbCreateRepo.Value = controller.GetRepoCreationProgress();
         }
 
+        private void Controller_RepoCreationProgressChanged(object sender, FailedEventArgs e)
+        {
+            MessageBox.Show(e.Message);
+            this.Enabled = true;
+        }
+
         private void Controller_RepoCreationCompleted(object sender, EventArgs e)
         {
             pbCreateRepo.Value = 100;
             MessageBox.Show("Repository successfully created");
-            this.Enabled = true;
             if (Directory.Exists(savepath))
                 Process.Start("explorer.exe", savepath);
+            
+            this.Enabled = true;
+            
             //System.Diagnostics.Process.Start("explorer.exe", string.Format("/select,\"{0}\"", "F:\\test\\test.xml"));
         }
 
@@ -166,6 +175,7 @@ namespace DCS_Livery_Synchronizer
             {
                 Object[] row = new object[4];
                 row[0] = true;
+                row[1] = lv.category;
                 row[1] = lv.aircraft;
                 row[2] = lv.name;
                 row[3] = lv.Status;
@@ -249,6 +259,7 @@ namespace DCS_Livery_Synchronizer
                     path = fbd.SelectedPath;
                 } else
                 {
+                    MessageBox.Show("Something went wrong. Make sure to select a Empty Folder.");
                     return;
                 }
             }
@@ -311,7 +322,6 @@ namespace DCS_Livery_Synchronizer
                 tasks[i] = factory.CreateDownloadAndInstallTask(lv, (state, progress) =>
                 {
                     progress *= 100;
-
                     if (state == InstallState.Done)
                     {
                         row.Cells[3].Value = "Installed";

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,13 +15,24 @@ namespace DCS_Livery_Synchronizer
     public delegate void InstallProgressChangedEventHandler(object sender, EventArgs e);
     public delegate void RepoCreationProgressChangedEventHandler(object sender, EventArgs e);
     public delegate void RepoCreationCompletedEventHandler(object sender, EventArgs e);
+    public delegate void RepoCreationFailedEventHandler(object sender, FailedEventArgs e);
+
+    public class FailedEventArgs : EventArgs
+    {
+        public string Message { get; set; }
+        public FailedEventArgs(string message)
+        {
+            Message = message;
+        }
+    }
+
     /// <summary>
     /// rewritten Controller component. Controller is in charge of all Changes to database and informs view with 
     /// events of updates in model. 
     /// </summary>
     public class NewController
     {
-        public const string repositoryVersion = "0.1";
+        public const string repositoryVersion = "0.2";
         public readonly Model Model;
         private InstallController controllerInstall;
         private ControllerSettings controllerSettings;
@@ -33,6 +45,7 @@ namespace DCS_Livery_Synchronizer
         public event InstallProgressChangedEventHandler InstallProgressChanged;
         public event RepoCreationProgressChangedEventHandler RepoCreationProgressChanged;
         public event RepoCreationCompletedEventHandler RepoCreationCompleted;
+        public event EventHandler<FailedEventArgs> RepoCreationFailed;
 
         public NewController()
         {
@@ -88,6 +101,11 @@ namespace DCS_Livery_Synchronizer
         public virtual void onRepoCreationProgressChanged(object sender, EventArgs e)
         {
             RepoCreationProgressChanged?.Invoke(sender, e);
+        }
+
+        public virtual void onRepoCreationFailed(object sender, FailedEventArgs e)
+        {
+            RepoCreationFailed?.Invoke(sender, e);
         }
 
         /// <summary>
