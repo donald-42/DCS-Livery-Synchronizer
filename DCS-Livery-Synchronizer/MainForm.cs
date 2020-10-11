@@ -170,6 +170,7 @@ namespace DCS_Livery_Synchronizer
         {
             var onlineRepo = controller.Model.OnlineRepository;
             //fill information into the gridview
+
             gvInstallRepo.Rows.Clear();
             foreach (Livery lv in onlineRepo.GetLiveries())
             {
@@ -303,9 +304,7 @@ namespace DCS_Livery_Synchronizer
                 {
                     var aircraftType = row.Cells[1].Value.ToString();
                     var aircraftName = row.Cells[2].Value.ToString();
-
                     var lv = this.controller.Model.OnlineRepository.GetLivery(aircraftType, aircraftName);
-
                     if (lv != null) installList.Add((lv, row));
                     else throw new Exception("What the fuck?");
                 }
